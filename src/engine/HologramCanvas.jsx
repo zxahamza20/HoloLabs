@@ -50,96 +50,157 @@ function buildDemo(machineId, mode) {
   return root;
 }
 
-export default function HologramCanvas({ machineId, mode, autoRotate, resetToken, onFps }) {
-  const containerRef = useRef(null);
+function disposeObjectTree(object) {
+  const geometries = new Set();
+  const materials = new Set();
+  object.traverse((node) => {
+    if (node.geometry) geometries.add(node.geometry);
+    if (node.material) {
+      const entries = Array.isArray(node.material) ? node.material : [node.material];
+      entries.forEach(material => materials.add(material));
+    }
+  });
+  geometries.forEach(geometry => geometry.dispose());
+  materials.forEach(material => material.dispose());
+}
 
+const DEFAULT_CAMERA = [6.8, 3.7, 7.6];
+const PIXEL_RATIO_CAPS = { eco: 1, balanced: 1.4, detail: 1.75 };
+
+export default function HologramCanvas({ machineId, mode, autoRotate, resetToken, quality, onFps, onReady, onError }) {
+  const hostRef = useRef(null);
+  const runtimeRef = useRef(null);
+  const callbacksRef = useRef({ onFps, onReady, onError });
+  callbacksRef.current = { onFps, onReady, onError };
+
+  // Only initialize WebGL once. UI interactions must not recreate the canvas.
   useEffect(() => {
-    const host = containerRef.current;
+    const host = hostRef.current;
     if (!host) return undefined;
-
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#040b17');
-    scene.fog = new THREE.FogExp2('#040b17', 0.028);
+    scene.background = new THREE.Color('#040d1a');
+    scene.fog = new THREE.FogExp2('#040d1a', 0.027);
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    camera.position.set(6.8, 3.7, 7.6);
+    camera.position.set(...DEFAULT_CAMERA);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    } catch (error) {
+      callbacksRef.current.onError?.(error.message || 'WebGL initialization failed');
+      return undefined;
+    }
     host.appendChild(renderer.domElement);
+    renderer.domElement.setAttribute('aria-label', 'Interactive 3D machine preview');
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.minDistance = 3;
-    controls.maxDistance = 23;
-    controls.autoRotate = autoRotate;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 2.8;
+    controls.maxDistance = 22;
     controls.autoRotateSpeed = 0.55;
     controls.target.set(0, 0, 0);
 
-    const grid = new THREE.GridHelper(24, 24, 0x15566c, 0x0a2434);
+    const grid = new THREE.GridHelper(24, 24, 0x15566c, 0x09283c);
     grid.position.y = -2.1;
     grid.material.transparent = true;
-    grid.material.opacity = 0.36;
+    grid.material.opacity = 0.42;
     scene.add(grid);
 
-    for (const radius of [2.8, 3.55]) {
+    for (const radius of [2.8, 3.55, 4.25]) {
       const curve = new THREE.EllipseCurve(0, 0, radius, radius, 0, Math.PI * 2, false, 0);
-      const coords = curve.getPoints(100).map((point) => new THREE.Vector3(point.x, -1.96, point.y));
-      const circle = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(coords), new THREE.LineBasicMaterial({ color: 0x0e6c86, transparent: true, opacity: 0.55 }));
-      scene.add(circle);
+      const coords = curve.getPoints(100).map(p => new THREE.Vector3(p.x, -1.96, p.y));
+      const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(coords), new THREE.LineBasicMaterial({ color: 0x0b6984, transparent: true, opacity: 0.48 }));
+      scene.add(ring);
     }
 
-    const model = buildDemo(machineId, mode);
-    scene.add(model);
-
+    let running = true;
     let frameId;
     let frameCount = 0;
-    let lastFpsTime = performance.now();
-    let active = true;
+    let lastFps = performance.now();
+    const runtime = { scene, camera, renderer, controls, model: null, resetCamera, resize };
+    runtimeRef.current = runtime;
 
+    function resetCamera() {
+      camera.position.set(...DEFAULT_CAMERA);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
     function resize() {
+      if (!running) return;
       const width = Math.max(1, host.clientWidth);
       const height = Math.max(1, host.clientHeight);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
     }
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(host);
-    resize();
-
     function animate(now) {
-      if (!active) return;
+      if (!running) return;
       frameId = requestAnimationFrame(animate);
+      if (document.hidden) {
+        lastFps = now;
+        frameCount = 0;
+        return;
+      }
       controls.update();
       renderer.render(scene, camera);
       frameCount += 1;
-      if (now - lastFpsTime >= 1000) {
-        onFps(Math.round((frameCount * 1000) / (now - lastFpsTime)));
-        lastFpsTime = now;
+      if (now - lastFps >= 1000) {
+        callbacksRef.current.onFps?.(Math.round((frameCount * 1000) / (now - lastFps)));
         frameCount = 0;
+        lastFps = now;
       }
     }
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(host);
+    resize();
     frameId = requestAnimationFrame(animate);
 
     return () => {
-      active = false;
+      running = false;
       cancelAnimationFrame(frameId);
-      resizeObserver.disconnect();
+      observer.disconnect();
       controls.dispose();
-      scene.traverse((node) => {
-        if (node.geometry) node.geometry.dispose();
-        if (node.material) {
-          const materials = Array.isArray(node.material) ? node.material : [node.material];
-          for (const material of materials) material.dispose();
-        }
-      });
+      disposeObjectTree(scene);
       renderer.dispose();
       renderer.domElement.remove();
+      runtimeRef.current = null;
     };
-  }, [machineId, mode, autoRotate, resetToken, onFps]);
+  }, []);
 
-  return (
-    <div className="hologram-canvas" ref={containerRef} role="img" aria-label={`3D holographic preview of ${machineId}`} />
-  );
+  // Update only the model when switching machine or display mode. The canvas,
+  // renderer, camera and event listeners remain alive between changes.
+  useEffect(() => {
+    const runtime = runtimeRef.current;
+    if (!runtime) return undefined;
+    if (runtime.model) {
+      runtime.scene.remove(runtime.model);
+      disposeObjectTree(runtime.model);
+    }
+    runtime.model = buildDemo(machineId, mode);
+    runtime.scene.add(runtime.model);
+    // This callback marks completion of the synchronous procedural model build.
+    // Async GLB loads will report readiness after asset decoding in Week 1 Day 4.
+    const id = requestAnimationFrame(() => callbacksRef.current.onReady?.(machineId));
+    return () => cancelAnimationFrame(id);
+  }, [machineId, mode]);
+
+  useEffect(() => {
+    if (runtimeRef.current) runtimeRef.current.controls.autoRotate = autoRotate;
+  }, [autoRotate]);
+
+  useEffect(() => {
+    const runtime = runtimeRef.current;
+    if (runtime) {
+      runtime.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, PIXEL_RATIO_CAPS[quality] || 1.4));
+      runtime.resize();
+    }
+  }, [quality]);
+
+  useEffect(() => {
+    runtimeRef.current?.resetCamera();
+  }, [resetToken]);
+
+  return <div className="hologram-canvas" ref={hostRef} role="img" aria-label={`3D procedural hologram preview of ${machineId}`}/>;
 }
