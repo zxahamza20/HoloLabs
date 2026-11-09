@@ -139,5 +139,7 @@ export default function HologramCanvas({ machineId, mode, autoRotate, resetToken
     };
   }, [machineId, mode, autoRotate, resetToken, onFps]);
 
-  return <div className="hologram-canvas" ref={containerRef} role="img" aria-label={`3D holographic preview of ${machineId}`} />;
+  return (
+    <div className="hologram-canvas" ref={containerRef} role="img" aria-label={`3D holographic preview of ${machineId}`} />
+  );
 }
