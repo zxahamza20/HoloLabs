@@ -1,104 +1,60 @@
-# HOLOLAB — Week 1 / Day 2
+# HOLOLAB — Week 1, Day 4
 
-React + Vite + Three.js application shell for a holographic machine learning explorer.
-This is an **incremental update to the Day 1 project**; it retains the procedural 3D previews and adds the library, inspector, preferences, onboarding/help, and reusable interface components.
+**Real machine hierarchy + GLB asset loading + asset lifecycle.** Builds on Days 1–3 without replacing the viewer. Tested with an original six-part GLB demo so future machine content follows a concrete contract.
 
-## Requirements
+## Run locally on macOS
 
-- Node.js version compatible with Vite 8 (currently Node 20.19+ or 22.12+; using a current supported LTS version is recommended)
-- npm
-- Chrome, Edge, or another modern desktop browser with WebGL enabled
-
-## Continue from Day 1 (important)
-
-1. Back up any edits you made to the Day 1 project.
-2. Download and extract the Day 2 project into a **new directory**.
-3. Open that directory in VS Code.
-4. Run:
+Prerequisite: a Node.js version supported by the Vite version in `package.json` and a current Chrome/Chromium browser.
 
 ```bash
 npm install
+npm run check:project
+npm run check:visuals
+npm run check:assets
+npm run inspect:glb -- public/models/car/wheel-brakes-demo.glb
+npm run build
 npm run dev
 ```
 
-You can also validate the starter catalog and file structure without installing dependencies:
+Open the Vite localhost URL (usually `http://localhost:5173`). This ZIP is cumulative; when merging into your existing git repository, **preserve `.git`**, `node_modules`, and any personal changes. Copy changed source files after backing up if needed.
 
-```bash
-npm run check:project
-```
+## Day 4 additions
 
-Open the local URL Vite prints, normally `http://localhost:5173/`.
+- Recursive machine → assembly → part hierarchy with stable IDs, short descriptions and GLB node mapping.
+- Original 35 KB wheel/brake GLB with six separately named meshes. **No additional downloads necessary** after `npm install`.
+- `GLTFLoader` integration using streaming fetch with byte progress where available. Only the focused assembly asset is loaded.
+- Click an imported mesh or its name in Inspector to highlight it and see basic part information.
+- Return to whole-machine overview; selected assembly GLB is unloaded and GPU resources disposed.
+- Async abort/stale-load guards when switching machines, resetting, and unmounting.
+- Reusable model scale normalization, animated hologram shading and edge extraction on GLB meshes.
+- Asset validator (including actual GLB node names), model hierarchy helpers and content authoring guide.
 
-If you did **not** make any local edits to Day 1, this folder replaces the Day 1 starter. If you have edits, compare and merge instead of overwriting them. The Day 2 project already includes all the source from Day 1, so don't nest Day 1 inside it.
+## Quick test
 
-## What's working on Day 2
+1. Open **Passenger Car**.
+2. In Inspector, select **Front Wheel & Brakes** → **Load 3D test assembly**.
+3. A ring-like wheel with brake components replaces the procedural car overview. Click components to highlight and inspect them.
+4. Press `W` or `S`, zoom/rotate, and check the visual controls still work.
+5. Click **Whole Passenger Car** to restore the overview.
+6. Change to Desktop or Smartphone; their overviews must still work, and their assemblies remain explicitly **outline only**.
 
-- Responsive app shell: primary navigation rail, searchable machine library, holographic viewport and machine inspector
-- Search for machines, categories **and listed component names** (e.g., `brake`, `cpu`, `camera`)
-- Category filtering: All / Vehicles / Computing / Electronics
-- Three switchable procedural 3D machine previews
-- Machine favorites (star) and display preferences persisted in local browser storage
-- Assembly blueprint selection in the inspector (metadata only — no isolation yet)
-- Hologram/wireframe toggle; auto spin; orbit/zoom/pan; reset camera
-- Renderer quality presets (Eco/Balanced/Detail), with actual pixel ratio changes
-- Loading/error states for the viewport and a live approximate render FPS counter
-- Help dialog and keyboard shortcuts
-- Retained camera and WebGL renderer when changing display settings, rather than recreating the whole canvas
+More detailed tests and known limitations: [docs/DAY4_HANDOFF.md](docs/DAY4_HANDOFF.md).
 
-## Keyboard and mouse controls
+## Contents
 
-| Input | Action |
-| --- | --- |
-| Left mouse drag | Orbit around model |
-| Scroll | Zoom in/out |
-| Right mouse drag | Pan |
-| `/` | Focus search box |
-| `1`, `2`, `3` | Select a machine |
-| `W` | Toggle display mode |
-| `Space` | Toggle auto-rotation |
-| `R` | Reset camera |
-| `H` | Open help |
-| `Esc` | Close a dialog |
+- `src/data/machines.js`: catalog and hierarchical parts data
+- `src/data/hierarchy.js`: recursive catalog utilities and validation
+- `src/engine/assetManager.js`: streaming GLB loader, node/part mapping, disposal
+- `src/engine/HologramCanvas.jsx`: scene + viewer + clickable assembly nodes
+- `src/components/InspectorPanel.jsx`: 3D test entry/exit, part browser and metadata
+- `public/models/car/wheel-brakes-demo.glb`: original generated GLB
+- `docs/MACHINE_MANIFEST.md`: model requirements and content guide
+- `scripts/generate-wheel-demo.py`: optional regeneration script
 
-Keyboard shortcuts are ignored while typing or when a dialog is open.
+## Known limitations
 
-## Not implemented yet
+Day 4 is **not yet** webcam tracking, gesture recognition, region isolation, detachment or full lessons. The bundled wheel model is an intentionally schematic test model, not an accurate service manual or full car geometry. Real CAD-style assets require suitable licenses and mesh preparation.
 
-- Webcam/MediaPipe hand tracking (Week 1 Day 5)
-- Hand gesture recognition (Week 1 Day 6)
-- Real GLB assets, nested loading and assembly hierarchy (asset work starts Day 4)
-- Discovery hotspots, zoom-to-isolate and breadcrumb transitions (Week 2)
-- Disassembly, educational labels, X-ray and operation/lesson modes (Week 3)
+## Verification
 
-The catalog and inspector deliberately label assemblies as **blueprint only**, to avoid implying that their interactive mechanics exist yet.
-
-## Folder map
-
-- `src/components/`: reusable UI panels, dialogs and SVG icon set
-- `src/data/machines.js`: catalog and planned assembly structure
-- `src/engine/HologramCanvas.jsx`: Three.js renderer and procedural models
-- `src/utils/preferences.js`: local persistence helper
-- `src/hand/`: reserved for Days 5–6
-- `src/learning/`: reserved for Week 3
-- `public/models/`: reserved for GLB assets
-- `scripts/inspect-glb.mjs`: mesh/node inspection helper
-- `docs/`: design and asset acceptance criteria
-
-## Test checklist
-
-- [ ] `npm run dev` starts cleanly
-- [ ] Three machine previews load; selected machine and metadata agree
-- [ ] Left drag / scroll / right drag work
-- [ ] Hologram ↔ Wireframe changes without throwing errors
-- [ ] Auto spin on/off and reset camera work
-- [ ] Searching `brake` returns the car, searching `gpu` returns desktop
-- [ ] Category filter and clear filters work
-- [ ] Inspector shows correct assembly metadata and part names
-- [ ] Favorites, mode and quality persist after refresh
-- [ ] Help/settings dialogs open and close; keyboard shortcuts work
-- [ ] No recurring WebGL errors when switching machines repeatedly
-- [ ] `npm run build` finishes successfully
-
-### Performance note
-
-The reported FPS is *rendering* FPS, not camera-to-gesture latency. Actual webcam performance will be profiled on Day 7. Repeated model changes dispose previous geometries and materials.
+The provided `check:*` scripts validate manifest integrity and required source features, not runtime browser rendering. Build and browser testing should be performed on your MacBook. Day 5 adds webcam and MediaPipe landmarks; Day 6 builds gestures; Day 7 combines tracking with the scene.

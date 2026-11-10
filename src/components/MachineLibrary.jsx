@@ -1,10 +1,11 @@
 import Icon from './Icon.jsx';
 import { CATEGORIES, MACHINES } from '../data/machines.js';
+import { searchableNames } from '../data/hierarchy.js';
 
 export default function MachineLibrary({ selectedId, onSelect, favorites, onToggleFavorite, query, onQueryChange, category, onCategoryChange, searchRef }) {
   const normalized = query.trim().toLowerCase();
   const filtered = MACHINES.filter((machine) => {
-    const haystack = [machine.name, machine.category, machine.description, ...machine.assemblies.map(a => a.name), ...machine.assemblies.flatMap(a => a.children)].join(' ').toLowerCase();
+    const haystack = searchableNames(machine);
     return (category === 'All' || machine.category === category) && haystack.includes(normalized);
   });
 
@@ -34,8 +35,8 @@ export default function MachineLibrary({ selectedId, onSelect, favorites, onTogg
       </div>)}
     </div>
     <div className="library-footer">
-      <div className="footer-eyebrow"><span className="live-dot"/> LOCAL PROTOTYPE <span className="tiny-version">V0.2</span></div>
-      <p>Three procedural previews. Detailed mechanical assets and hand tracking are upcoming milestones.</p>
+      <div className="footer-eyebrow"><span className="live-dot"/> LOCAL PROTOTYPE <span className="tiny-version">V0.4</span></div>
+      <p>Procedural overviews plus one original, multipart wheel GLB. Hand tracking begins Day 5.</p>
     </div>
   </aside>;
 }
