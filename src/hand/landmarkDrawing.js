@@ -1,5 +1,5 @@
 // Pure drawing/formatting helpers. MediaPipe delivers 21 normalized points
-// per detected hand. These functions do NOT infer gestures (Day 6).
+// per detected hand. Gesture inference lives in gestureRecognizer.js.
 export const HAND_CONNECTIONS = Object.freeze([
   [0, 1], [1, 2], [2, 3], [3, 4],
   [0, 5], [5, 6], [6, 7], [7, 8],

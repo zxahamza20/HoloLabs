@@ -13,10 +13,10 @@ export function Dialog({ title, description, onClose, children }) {
 
 export function HelpContent() {
   return <div className="help-content">
-    <div className="help-callout"><Icon name="info"/><span><strong>Day 5:</strong> Open Hand lab from the viewer toolbar, grant camera permission, and observe 21 landmarks per hand. Part selection still uses the mouse; gestures and disassembly are not yet active.</span></div>
+    <div className="help-callout"><Icon name="info"/><span><strong>Day 6:</strong> Open Hand lab to detect Point, Pinch, Open palm, and Fist, plus a two-hand zoom preview. The 3D model still uses mouse controls; gesture-to-3D actions come next.</span></div>
     <div className="shortcut-grid">
       {[
-        ['Hand lab / C', 'Open or close the webcam and landmark tracker'],
+        ['Hand lab / C', 'Open or close the webcam gesture recognition lab'],
         ['Left-drag', 'Orbit around the object'],
         ['Click 3D part', 'Highlight a named mesh in assembly test mode'],
         ['Inspector', 'Select Front Wheel & Brakes → Load 3D test assembly'],
@@ -47,6 +47,6 @@ export function SettingsContent({ quality, onQualityChange, effects, onEffectsCh
       <div><strong>{label}</strong><p>{description}</p></div>
       <label className="switch-control"><input type="checkbox" checked={effects[key] !== false} onChange={event => onEffectsChange(previous => ({ ...previous, [key]: event.target.checked }))} aria-label={label}/><span/></label>
     </div>)}
-    <p className="settings-note">Preferences are saved in this browser. Webcam processor and frame-rate settings are available from Hand lab. Gesture calibration comes on Day 6.</p>
+    <p className="settings-note">Preferences are saved in this browser. Webcam processor, tracking rate, and gesture sensitivity settings are available in Hand lab.</p>
   </div>;
 }

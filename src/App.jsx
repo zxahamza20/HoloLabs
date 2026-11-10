@@ -138,7 +138,7 @@ export default function App() {
     <main className="main-area">
       <header className="app-topbar">
         <div className="breadcrumbs"><Icon name="layers" size={17}/><span>EXPLORER</span><span className="crumb-separator">/</span><strong>{machine.name.toUpperCase()}</strong>{activeAssembly && <><span className="crumb-separator">/</span><strong>{activeAssembly.name.toUpperCase()}</strong></>}</div>
-        <div className="topbar-actions"><span className="build-pill"><span className="build-dot"/> WEEK 01 / DAY 05</span><button type="button" className="top-action" onClick={() => setModal('help')}><Icon name="keyboard" size={17}/><span>Controls</span></button></div>
+        <div className="topbar-actions"><span className="build-pill"><span className="build-dot"/> WEEK 01 / DAY 06</span><button type="button" className="top-action" onClick={() => setModal('help')}><Icon name="keyboard" size={17}/><span>Controls</span></button></div>
       </header>
 
       <div className={`workbench ${inspectorOpen ? '' : 'inspector-hidden'}`}>
@@ -162,13 +162,13 @@ export default function App() {
               <span className="toolbar-divider"/>
               <button type="button" title="Reset camera (R)" onClick={() => setResetToken(x => x + 1)}><Icon name="reset" size={17}/><span>Reset view</span></button>
               <span className="toolbar-divider"/>
-              <button type="button" title="Open hand tracking lab (Day 5)" aria-expanded={handPanelOpen} aria-controls="hand-tracking" className={handPanelOpen ? 'active' : ''} onClick={() => handPanelOpen ? closeHandPanel() : setHandPanelOpen(true)}><Icon name="hand" size={17}/><span>Hand lab</span></button>
+              <button type="button" title="Open hand gesture recognition lab (Day 6)" aria-expanded={handPanelOpen} aria-controls="hand-tracking" className={handPanelOpen ? 'active' : ''} onClick={() => handPanelOpen ? closeHandPanel() : setHandPanelOpen(true)}><Icon name="hand" size={17}/><span>Hand lab</span></button>
               <span className="toolbar-divider"/>
               <button type="button" title="Toggle machine inspector" aria-expanded={inspectorOpen} onClick={() => setInspectorOpen(value => !value)} className={inspectorOpen ? 'active' : ''}><Icon name="layers" size={17}/><span>Inspector</span></button>
             </div><div className="mouse-hint">DRAG TO ORBIT <span>•</span> SCROLL TO ZOOM <span>•</span> RIGHT-DRAG TO PAN</div></div>
           </section>
 
-          <section className="below-viewer"><div className="below-header"><div><span className="overline">UNDER THE HOOD</span><h2>Exploration roadmap</h2></div><span className="small-outline">DAY 05 / HAND LANDMARKS</span></div><div className="roadmap-strip"><div className="roadmap-step current"><span className="roadmap-icon"><Icon name="check" size={16}/></span><div><strong>Browse</strong><small>Working now</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="scan" size={16}/></span><div><strong>Discover</strong><small>Week 2</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="box" size={16}/></span><div><strong>Disassemble</strong><small>Week 3</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="info" size={16}/></span><div><strong>Learn</strong><small>Week 3</small></div></div></div></section>
+          <section className="below-viewer"><div className="below-header"><div><span className="overline">UNDER THE HOOD</span><h2>Exploration roadmap</h2></div><span className="small-outline">DAY 06 / GESTURE SIGNALS</span></div><div className="roadmap-strip"><div className="roadmap-step current"><span className="roadmap-icon"><Icon name="check" size={16}/></span><div><strong>Browse</strong><small>Working now</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="scan" size={16}/></span><div><strong>Discover</strong><small>Week 2</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="box" size={16}/></span><div><strong>Disassemble</strong><small>Week 3</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="info" size={16}/></span><div><strong>Learn</strong><small>Week 3</small></div></div></div></section>
         </div>
 
         {inspectorOpen && <InspectorPanel machine={machine} selectedAssemblyId={selectedAssemblyId} activeAssemblyId={activeAssemblyId} selectedPartId={selectedPartId} onSelectPart={setSelectedPartId} onSelectAssembly={chooseAssembly} onOpenAssembly={openAssembly} onReturnOverview={returnOverview} assetInfo={assetInfo} onClose={() => setInspectorOpen(false)}/>}

@@ -1,10 +1,15 @@
-# HOLOLAB — Week 1, Day 5 (v0.5)
+# HOLOLAB — Week 1, Day 6 (v0.6)
 
-A cumulative React/Vite/Three.js project building on Days 1–4. This release adds **webcam hand tracking with 21 landmarks per hand for up to two hands**, and fixes the imported wheel mesh-name mismatch found in Day 4.
+A cumulative React + Vite + Three.js project. Includes Days 1–5 plus **on-device landmark-based gesture recognition**. The Day 4 wheel mesh-name fix remains included.
 
-## Run it
+## Requirements
 
-Requires a recent Node.js version compatible with Vite 8, npm, Google Chrome, and a webcam. Run from this directory:
+- macOS (M2 MacBook Air / 8 GB RAM is the development target) or another modern computer with a webcam
+- Chrome with camera permission on `localhost`
+- Node.js compatible with the included Vite version (check the version printed by `npm install`)
+- Network connection for the initial MediaPipe WASM/model download
+
+## Run
 
 ```bash
 npm install
@@ -12,27 +17,39 @@ npm run check:project
 npm run check:visuals
 npm run check:assets
 npm run check:hands
+npm run check:gestures
 npm run build
 npm run dev
 ```
 
-Visit the localhost URL Vite prints. Click **Hand lab** (or press **C**) in the 3D viewport toolbar, then **Start camera** and allow access. Show one hand, then two: the overlay draws MediaPipe's 21 landmarks and their connections. Tracking metrics update alongside the existing renderer FPS.
+Visit the Vite `localhost` address. Open **Hand lab** (the camera button, or keyboard **C**), then **Start camera**.
 
-**First camera launch needs internet.** MediaPipe's pinned WASM and hand model load from external URLs, unlike the bundled 35 KB test GLB. If needed, use the **CPU only** toggle before starting, or reduce the tracking rate.
+## Day 6 behavior
 
-The earlier car / Front Wheel & Brakes assembly still works. It now identifies all six part meshes even if Three.js changes names from spaces to underscores.
+- Recognizes **Point**, **Pinch**, **Open palm**, and **Fist**, plus a **two-hand pinch/zoom preview**.
+- Displays each stabilized gesture on the camera feed and in the live gesture readout.
+- Uses **palm-size normalization**, hysteresis for pinch, a short temporal confirmation window, and fingertip pointer smoothing.
+- Hand identity matching is based primarily on palm location, not the arbitrary detection-array order.
+- Provides **Relaxed**, **Balanced** (default), and **Precise** sensitivity presets. Use **Reset gestures** to clear the history when testing again.
+- Continues to show the webcam landmarks, tracking FPS, inference time, and GPU/CPU selection from Day 5.
+- Stopping or closing the camera clears active gesture state. It also releases the camera resource.
 
-Read [docs/DAY5_HANDOFF.md](docs/DAY5_HANDOFF.md) for acceptance tests, privacy, GPU troubleshooting and exactly what is not yet implemented.
+**Important:** Day 6 only recognizes gestures. It does **not yet** rotate, move, zoom, or disassemble the Three.js model. Hooking stable signals into 3D actions follows on Day 7 / Week 2. The two-hand zoom factor shown here is a diagnostic preview, not a camera transform.
 
-## What Day 5 is not
+## Testing
 
-There is no 3D gesture manipulation yet. Day 6 interprets landmarks as gestures, and Day 7 tests combined gesture-driven 3D navigation and frame timing. The current detection loop intentionally uses a capped synchronous `detectForVideo` pass to establish a baseline on your M2; browser worker support is evaluated afterward rather than assumed.
+- `npm run check:gestures` runs eight deterministic unit tests with synthetic hand poses. They test clear poses, hysteresis, temporal confirmation, momentary noise, two-hand zoom, identity tracking, disappearance, and sensitivity changes.
+- `npm run check:hands` also verifies the six mapped wheel mesh names from the Day 4 hotfix.
+- The **full WebGL browser build and real webcam tracking** must be tested on your computer; synthetic tests cannot establish real-world accuracy.
 
-## Source
+The custom classifier uses 2D joint angles and index/thumb distance, so severe occlusion, extreme hand rotation, or poor lighting can still result in `Unrecognized`. Start at 15 tracking FPS and Balanced sensitivity, then adjust according to the actual camera readout.
 
-- `src/hand/HandTrackingPanel.jsx`: webcam lifecycle, MediaPipe loading, frame scheduler and diagnostics
-- `src/hand/landmarkDrawing.js`: 21 landmark drawing helpers and hand connections
-- `src/engine/nodeNames.js`: safe GLB name canonicalization (Day 4 fix)
-- `scripts/check-day5.mjs`: landmark/source checks plus GLB mesh-name mapping test
+## Files
 
-For all earlier project structure and model metadata, see the Day 1–4 documentation in `docs`.
+- `src/hand/gestureRecognizer.js`: pure classifiers and stateful temporal recognition
+- `src/hand/HandTrackingPanel.jsx`: live integration, gesture readouts, settings and camera lifecycle
+- `src/styles.css`: responsive styling for new readouts
+- `scripts/check-day6.test.mjs`: regression tests using Node's built-in test runner
+- `docs/DAY6_HANDOFF.md`: acceptance checklist, troubleshooting and system boundaries
+
+See previous `docs/DAY*_HANDOFF.md` files for earlier stages.

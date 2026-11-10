@@ -35,8 +35,8 @@ export default function MachineLibrary({ selectedId, onSelect, favorites, onTogg
       </div>)}
     </div>
     <div className="library-footer">
-      <div className="footer-eyebrow"><span className="live-dot"/> LOCAL PROTOTYPE <span className="tiny-version">V0.4</span></div>
-      <p>Procedural overviews plus one original, multipart wheel GLB. Hand tracking begins Day 5.</p>
+      <div className="footer-eyebrow"><span className="live-dot"/> LOCAL PROTOTYPE <span className="tiny-version">V0.6</span></div>
+      <p>Procedural overviews plus a multipart wheel GLB. Live gesture recognition is available in Hand lab.</p>
     </div>
   </aside>;
 }
