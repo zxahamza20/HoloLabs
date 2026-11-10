@@ -1,7 +1,7 @@
 {
   "name": "hololab",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "inspect:glb": "node scripts/inspect-glb.mjs",
     "check:project": "node scripts/check-project.mjs",
     "check:visuals": "node scripts/check-day3.mjs",
-    "check:assets": "node scripts/check-day4.mjs"
+    "check:assets": "node scripts/check-day4.mjs",
+    "check:hands": "node scripts/check-day5.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.2",

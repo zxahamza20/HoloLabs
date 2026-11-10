@@ -1,6 +1,8 @@
 import React from 'react';
 
 const shapes = {
+  camera: <><rect x="2" y="6" width="15" height="12" rx="2"/><path d="m17 10 5-3v10l-5-3M7 3h5"/></>,
+  hand: <><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v8-4a1.5 1.5 0 0 1 3 0v6c0 4-3 7-7 7h-2c-3 0-4.8-1.4-6-4l-2-4a1.5 1.5 0 0 1 2.6-1.5L8 15"/></>,
   scan: <><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><path d="M8 12h8M12 8v8"/></>,
   search: <><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></>,
   car: <><path d="M5 16H3v-4l2.1-5a2 2 0 0 1 1.85-1.2h10.1A2 2 0 0 1 18.9 7l2.1 5v4h-2"/><path d="M5 16h14M5 12h14M6 7h12M6 16v2m12-2v2"/><circle cx="7.5" cy="15.5" r="1"/><circle cx="16.5" cy="15.5" r="1"/></>,

@@ -6,6 +6,7 @@ import MachineLibrary from './components/MachineLibrary.jsx';
 import InspectorPanel from './components/InspectorPanel.jsx';
 import { Dialog, HelpContent, SettingsContent } from './components/Overlays.jsx';
 import Icon from './components/Icon.jsx';
+import HandTrackingPanel from './hand/HandTrackingPanel.jsx';
 import { usePreference } from './utils/preferences.js';
 
 export default function App() {
@@ -29,7 +30,13 @@ export default function App() {
   const [fps, setFps] = useState(null);
   const [sceneLoaded, setSceneLoaded] = useState(false);
   const [sceneError, setSceneError] = useState(null);
+  const [handPanelOpen, setHandPanelOpen] = useState(false);
+  const [handDiagnostics, setHandDiagnostics] = useState({ status: 'idle', hands: 0, trackingFps: 0, inferenceMs: null });
   const searchRef = useRef(null);
+  const closeHandPanel = useCallback(() => {
+    setHandPanelOpen(false);
+    setHandDiagnostics({ status: 'idle', hands: 0, trackingFps: 0, inferenceMs: null });
+  }, []);
 
   const selectedAssemblyId = machine.assemblies.some(a => a.id === assemblyId) ? assemblyId : machine.assemblies[0].id;
   const favoriteIds = Array.isArray(favorites) ? favorites : [];
@@ -108,6 +115,7 @@ export default function App() {
       if (event.key === '/' && !isEditing) { event.preventDefault(); searchRef.current?.focus(); return; }
       if (isEditing || tag === 'BUTTON') return;
       if (event.key === 'h' || event.key === 'H') setModal('help');
+      if (event.key === 'c' || event.key === 'C') { if (handPanelOpen) closeHandPanel(); else setHandPanelOpen(true); }
       if (event.key === 'w' || event.key === 'W') setMode(v => v === 'wireframe' ? 'hologram' : 'wireframe');
       if (event.key === 's' || event.key === 'S') setEffects(prev => ({ ...prev, scan: prev.scan === false }));
       if (event.key === 'r' || event.key === 'R') setResetToken(t => t + 1);
@@ -116,7 +124,7 @@ export default function App() {
     }
     window.addEventListener('keydown', shortcut);
     return () => window.removeEventListener('keydown', shortcut);
-  }, [modal, setMode, setAutoRotate, setEffects, selectMachine]);
+  }, [modal, setMode, setAutoRotate, setEffects, selectMachine, handPanelOpen, closeHandPanel]);
 
   return <div className="shell">
     <div className="global-rail">
@@ -130,7 +138,7 @@ export default function App() {
     <main className="main-area">
       <header className="app-topbar">
         <div className="breadcrumbs"><Icon name="layers" size={17}/><span>EXPLORER</span><span className="crumb-separator">/</span><strong>{machine.name.toUpperCase()}</strong>{activeAssembly && <><span className="crumb-separator">/</span><strong>{activeAssembly.name.toUpperCase()}</strong></>}</div>
-        <div className="topbar-actions"><span className="build-pill"><span className="build-dot"/> WEEK 01 / DAY 04</span><button type="button" className="top-action" onClick={() => setModal('help')}><Icon name="keyboard" size={17}/><span>Controls</span></button></div>
+        <div className="topbar-actions"><span className="build-pill"><span className="build-dot"/> WEEK 01 / DAY 05</span><button type="button" className="top-action" onClick={() => setModal('help')}><Icon name="keyboard" size={17}/><span>Controls</span></button></div>
       </header>
 
       <div className={`workbench ${inspectorOpen ? '' : 'inspector-hidden'}`}>
@@ -140,7 +148,8 @@ export default function App() {
             <div className="visual-meter" aria-hidden="true"><span className="live-indicator"/> HOLOGRAPHIC FEED <span className="visual-meter-line"/> 03.01</div>
             <div className="viewport-scanner" aria-hidden="true"><span className="scanner-corner tl"/><span className="scanner-corner tr"/><span className="scanner-corner bl"/><span className="scanner-corner br"/></div>
             <div className="viewer-info"><span className="eyebrow"><span className="crosshair">⊹</span> INTERACTIVE MODEL / PROTOTYPE</span><h1>{activeAssembly?.name || machine.name}</h1><p>{activeAssembly ? "Imported named-part GLB / selection test" : machine.tagLine}</p><span className="preview-badge"><Icon name="info" size={14}/> {activeAssembly ? "ORIGINAL GLB TEST ASSEMBLY" : "PROCEDURAL OVERVIEW"}</span></div>
-            <div className="telemetry"><div className="telemetry-item"><small>RENDERING</small><strong className="teal">{fps === null ? '—' : `${fps} FPS`}</strong></div><div className="telemetry-item"><small>MODEL DATA</small><strong>{activeAssembly ? `${assetInfo?.nodeNames.length ?? 0} PARTS / GLB` : "OVERVIEW DEMO"}</strong></div><div className="telemetry-item"><small>VISUAL FX</small><strong className="teal">{quality === 'eco' || effects.bloom === false ? 'LITE' : 'BLOOM'} / {effects.scan === false ? 'SCAN OFF' : 'SCAN ON'}</strong></div><div className="telemetry-item"><small>HAND TRACKING</small><strong className="dim">DAY 05</strong></div></div>
+            <div className="telemetry"><div className="telemetry-item"><small>RENDERING</small><strong className="teal">{fps === null ? '—' : `${fps} FPS`}</strong></div><div className="telemetry-item"><small>MODEL DATA</small><strong>{activeAssembly ? `${assetInfo?.nodeNames.length ?? 0} PARTS / GLB` : "OVERVIEW DEMO"}</strong></div><div className="telemetry-item"><small>VISUAL FX</small><strong className="teal">{quality === 'eco' || effects.bloom === false ? 'LITE' : 'BLOOM'} / {effects.scan === false ? 'SCAN OFF' : 'SCAN ON'}</strong></div><div className="telemetry-item"><small>HAND TRACKING</small><strong className={handDiagnostics.status === 'running' ? 'teal' : 'dim'}>{handDiagnostics.status === 'running' ? `${handDiagnostics.hands} HANDS · ${handDiagnostics.trackingFps} FPS` : handDiagnostics.status === 'idle' ? 'OFF' : handDiagnostics.status.toUpperCase()}</strong></div></div>
+            {handPanelOpen && <HandTrackingPanel onClose={closeHandPanel} onDiagnostics={setHandDiagnostics}/>}
             {!sceneLoaded && !sceneError && <div className="loading-overlay" role="status"><div className="loading-emblem"><Icon name="scan" size={35}/></div><strong>Preparing model</strong><span>{activeAssembly ? (loadProgress?.stage === 'decoding' ? 'Decoding GLB...' : `Downloading GLB${loadProgress?.percent != null ? ` · ${loadProgress.percent}%` : '...'}`) : 'Building procedural geometry...'}</span></div>}
             {sceneError && <div className="error-overlay" role="alert"><Icon name="info" size={25}/><strong>3D viewer unavailable</strong><p>{sceneError}</p><span>{activeAssembly ? "Return to the whole machine or check that the GLB exists in public/models." : "Try an updated desktop browser with WebGL enabled."}</span></div>}
             {activeAssembly && <div className="assembly-view-bar"><span>ASSEMBLY TEST MODE</span><button type="button" onClick={returnOverview}>← Whole {machine.name}</button></div>}
@@ -153,11 +162,13 @@ export default function App() {
               <span className="toolbar-divider"/>
               <button type="button" title="Reset camera (R)" onClick={() => setResetToken(x => x + 1)}><Icon name="reset" size={17}/><span>Reset view</span></button>
               <span className="toolbar-divider"/>
+              <button type="button" title="Open hand tracking lab (Day 5)" aria-expanded={handPanelOpen} aria-controls="hand-tracking" className={handPanelOpen ? 'active' : ''} onClick={() => handPanelOpen ? closeHandPanel() : setHandPanelOpen(true)}><Icon name="hand" size={17}/><span>Hand lab</span></button>
+              <span className="toolbar-divider"/>
               <button type="button" title="Toggle machine inspector" aria-expanded={inspectorOpen} onClick={() => setInspectorOpen(value => !value)} className={inspectorOpen ? 'active' : ''}><Icon name="layers" size={17}/><span>Inspector</span></button>
             </div><div className="mouse-hint">DRAG TO ORBIT <span>•</span> SCROLL TO ZOOM <span>•</span> RIGHT-DRAG TO PAN</div></div>
           </section>
 
-          <section className="below-viewer"><div className="below-header"><div><span className="overline">UNDER THE HOOD</span><h2>Exploration roadmap</h2></div><span className="small-outline">DAY 04 / ASSET PIPELINE</span></div><div className="roadmap-strip"><div className="roadmap-step current"><span className="roadmap-icon"><Icon name="check" size={16}/></span><div><strong>Browse</strong><small>Working now</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="scan" size={16}/></span><div><strong>Discover</strong><small>Week 2</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="box" size={16}/></span><div><strong>Disassemble</strong><small>Week 3</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="info" size={16}/></span><div><strong>Learn</strong><small>Week 3</small></div></div></div></section>
+          <section className="below-viewer"><div className="below-header"><div><span className="overline">UNDER THE HOOD</span><h2>Exploration roadmap</h2></div><span className="small-outline">DAY 05 / HAND LANDMARKS</span></div><div className="roadmap-strip"><div className="roadmap-step current"><span className="roadmap-icon"><Icon name="check" size={16}/></span><div><strong>Browse</strong><small>Working now</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="scan" size={16}/></span><div><strong>Discover</strong><small>Week 2</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="box" size={16}/></span><div><strong>Disassemble</strong><small>Week 3</small></div></div><div className="roadmap-connector"/><div className="roadmap-step"><span className="roadmap-icon"><Icon name="info" size={16}/></span><div><strong>Learn</strong><small>Week 3</small></div></div></div></section>
         </div>
 
         {inspectorOpen && <InspectorPanel machine={machine} selectedAssemblyId={selectedAssemblyId} activeAssemblyId={activeAssemblyId} selectedPartId={selectedPartId} onSelectPart={setSelectedPartId} onSelectAssembly={chooseAssembly} onOpenAssembly={openAssembly} onReturnOverview={returnOverview} assetInfo={assetInfo} onClose={() => setInspectorOpen(false)}/>}

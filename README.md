@@ -1,60 +1,38 @@
-# HOLOLAB — Week 1, Day 4
+# HOLOLAB — Week 1, Day 5 (v0.5)
 
-**Real machine hierarchy + GLB asset loading + asset lifecycle.** Builds on Days 1–3 without replacing the viewer. Tested with an original six-part GLB demo so future machine content follows a concrete contract.
+A cumulative React/Vite/Three.js project building on Days 1–4. This release adds **webcam hand tracking with 21 landmarks per hand for up to two hands**, and fixes the imported wheel mesh-name mismatch found in Day 4.
 
-## Run locally on macOS
+## Run it
 
-Prerequisite: a Node.js version supported by the Vite version in `package.json` and a current Chrome/Chromium browser.
+Requires a recent Node.js version compatible with Vite 8, npm, Google Chrome, and a webcam. Run from this directory:
 
 ```bash
 npm install
 npm run check:project
 npm run check:visuals
 npm run check:assets
-npm run inspect:glb -- public/models/car/wheel-brakes-demo.glb
+npm run check:hands
 npm run build
 npm run dev
 ```
 
-Open the Vite localhost URL (usually `http://localhost:5173`). This ZIP is cumulative; when merging into your existing git repository, **preserve `.git`**, `node_modules`, and any personal changes. Copy changed source files after backing up if needed.
+Visit the localhost URL Vite prints. Click **Hand lab** (or press **C**) in the 3D viewport toolbar, then **Start camera** and allow access. Show one hand, then two: the overlay draws MediaPipe's 21 landmarks and their connections. Tracking metrics update alongside the existing renderer FPS.
 
-## Day 4 additions
+**First camera launch needs internet.** MediaPipe's pinned WASM and hand model load from external URLs, unlike the bundled 35 KB test GLB. If needed, use the **CPU only** toggle before starting, or reduce the tracking rate.
 
-- Recursive machine → assembly → part hierarchy with stable IDs, short descriptions and GLB node mapping.
-- Original 35 KB wheel/brake GLB with six separately named meshes. **No additional downloads necessary** after `npm install`.
-- `GLTFLoader` integration using streaming fetch with byte progress where available. Only the focused assembly asset is loaded.
-- Click an imported mesh or its name in Inspector to highlight it and see basic part information.
-- Return to whole-machine overview; selected assembly GLB is unloaded and GPU resources disposed.
-- Async abort/stale-load guards when switching machines, resetting, and unmounting.
-- Reusable model scale normalization, animated hologram shading and edge extraction on GLB meshes.
-- Asset validator (including actual GLB node names), model hierarchy helpers and content authoring guide.
+The earlier car / Front Wheel & Brakes assembly still works. It now identifies all six part meshes even if Three.js changes names from spaces to underscores.
 
-## Quick test
+Read [docs/DAY5_HANDOFF.md](docs/DAY5_HANDOFF.md) for acceptance tests, privacy, GPU troubleshooting and exactly what is not yet implemented.
 
-1. Open **Passenger Car**.
-2. In Inspector, select **Front Wheel & Brakes** → **Load 3D test assembly**.
-3. A ring-like wheel with brake components replaces the procedural car overview. Click components to highlight and inspect them.
-4. Press `W` or `S`, zoom/rotate, and check the visual controls still work.
-5. Click **Whole Passenger Car** to restore the overview.
-6. Change to Desktop or Smartphone; their overviews must still work, and their assemblies remain explicitly **outline only**.
+## What Day 5 is not
 
-More detailed tests and known limitations: [docs/DAY4_HANDOFF.md](docs/DAY4_HANDOFF.md).
+There is no 3D gesture manipulation yet. Day 6 interprets landmarks as gestures, and Day 7 tests combined gesture-driven 3D navigation and frame timing. The current detection loop intentionally uses a capped synchronous `detectForVideo` pass to establish a baseline on your M2; browser worker support is evaluated afterward rather than assumed.
 
-## Contents
+## Source
 
-- `src/data/machines.js`: catalog and hierarchical parts data
-- `src/data/hierarchy.js`: recursive catalog utilities and validation
-- `src/engine/assetManager.js`: streaming GLB loader, node/part mapping, disposal
-- `src/engine/HologramCanvas.jsx`: scene + viewer + clickable assembly nodes
-- `src/components/InspectorPanel.jsx`: 3D test entry/exit, part browser and metadata
-- `public/models/car/wheel-brakes-demo.glb`: original generated GLB
-- `docs/MACHINE_MANIFEST.md`: model requirements and content guide
-- `scripts/generate-wheel-demo.py`: optional regeneration script
+- `src/hand/HandTrackingPanel.jsx`: webcam lifecycle, MediaPipe loading, frame scheduler and diagnostics
+- `src/hand/landmarkDrawing.js`: 21 landmark drawing helpers and hand connections
+- `src/engine/nodeNames.js`: safe GLB name canonicalization (Day 4 fix)
+- `scripts/check-day5.mjs`: landmark/source checks plus GLB mesh-name mapping test
 
-## Known limitations
-
-Day 4 is **not yet** webcam tracking, gesture recognition, region isolation, detachment or full lessons. The bundled wheel model is an intentionally schematic test model, not an accurate service manual or full car geometry. Real CAD-style assets require suitable licenses and mesh preparation.
-
-## Verification
-
-The provided `check:*` scripts validate manifest integrity and required source features, not runtime browser rendering. Build and browser testing should be performed on your MacBook. Day 5 adds webcam and MediaPipe landmarks; Day 6 builds gestures; Day 7 combines tracking with the scene.
+For all earlier project structure and model metadata, see the Day 1–4 documentation in `docs`.

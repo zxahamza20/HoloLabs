@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createHologramMaterials } from './hologramMaterials.js';
 import { createScanSlice } from './sceneEffects.js';
 import { flattenParts } from '../data/hierarchy.js';
+import { canonicalNodeName, buildNodeLookup } from './nodeNames.js';
 
 // Disposing the geometry is insufficient: materials and textures also allocate
 // GPU resources. The sets ensure shared resources are disposed exactly once.
@@ -90,13 +91,13 @@ export async function loadGlbAssembly({ asset, parts, mode, scanEnabled, signal,
   const fx = createHologramMaterials(mode, scanEnabled);
   root.userData.fx = fx;
   const available = flattenParts(parts);
-  const byName = new Map(available.map(p => [p.glbNode, p]));
+  const byName = buildNodeLookup(available);
   const found = new Set();
   let triangles = 0;
   content.traverse(object => {
     if (!object.isMesh) return;
     if (!object.geometry.attributes.normal) object.geometry.computeVertexNormals();
-    const part = byName.get(object.name);
+    const part = byName.get(canonicalNodeName(object.name));
     if (part) { object.userData.partId = part.id; found.add(part.id); }
     const originals = Array.isArray(object.material) ? object.material : [object.material];
     for (const m of originals) if (m) oldMaterials.add(m);
