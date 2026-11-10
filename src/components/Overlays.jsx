@@ -13,10 +13,15 @@ export function Dialog({ title, description, onClose, children }) {
 
 export function HelpContent() {
   return <div className="help-content">
-    <div className="help-callout"><Icon name="info"/><span><strong>Day 6:</strong> Open Hand lab to detect Point, Pinch, Open palm, and Fist, plus a two-hand zoom preview. The 3D model still uses mouse controls; gesture-to-3D actions come next.</span></div>
+    <div className="help-callout"><Icon name="info"/><span><strong>Day 7:</strong> Start the camera and enable “Control the 3D viewer.” Point to aim, pinch-and-release to select GLB parts, fist-drag to orbit, open-palm drag to pan, two-hand pinch to zoom. Mouse remains available.</span></div>
     <div className="shortcut-grid">
       {[
-        ['Hand lab / C', 'Open or close the webcam gesture recognition lab'],
+        ['Hand controls / C', 'Open or close the webcam lab; enable 3D control after starting the camera'],
+        ['Point (one hand)', 'Aim the cyan 3D cursor at a part'],
+        ['Pinch and release', 'Select the aimed GLB part; pinching both hands will not select'],
+        ['Fist + move hand', 'Rotate camera around the model'],
+        ['Open palm + move', 'Pan the camera'],
+        ['Pinch with both hands', 'Spread / close hands to zoom'],
         ['Left-drag', 'Orbit around the object'],
         ['Click 3D part', 'Highlight a named mesh in assembly test mode'],
         ['Inspector', 'Select Front Wheel & Brakes → Load 3D test assembly'],

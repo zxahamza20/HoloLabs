@@ -15,7 +15,7 @@ const GESTURE_GUIDE = [
   { key: GESTURES.FIST, hint: 'Curl all four fingers' },
 ];
 
-export default function HandTrackingPanel({ onClose, onDiagnostics }) {
+export default function HandTrackingPanel({ onClose, onDiagnostics, onGestureFrame, controlsEnabled, onControlsEnabledChange }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -32,8 +32,10 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
   const [stats, setStats] = useState(EMPTY_STATS);
   const [sensitivity, setSensitivity] = useState('balanced');
   const [gestureState, setGestureState] = useState(EMPTY_GESTURES);
+  const [compact, setCompact] = useState(false);
 
   const releaseResources = useCallback(() => {
+    onGestureFrame?.(null);
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     if (landmarkerRef.current) {
@@ -48,7 +50,7 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
     if (video) { video.pause(); video.srcObject = null; }
     const canvas = canvasRef.current;
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
-  }, []);
+  }, [onGestureFrame]);
 
   const stopCamera = useCallback(() => {
     generationRef.current += 1;
@@ -57,8 +59,9 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
     gestureEngineRef.current.reset();
     setGestureState(EMPTY_GESTURES);
     setErrorMessage('');
+    onControlsEnabledChange?.(false);
     setStatus('idle');
-  }, [releaseResources]);
+  }, [releaseResources, onControlsEnabledChange]);
 
   useEffect(() => () => { generationRef.current += 1; releaseResources(); }, [releaseResources]);
   useEffect(() => {
@@ -163,6 +166,8 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
           lastHandCount = results.landmarks?.length || 0;
           lastHands = (results.handedness || []).map(getHandLabel);
           const gestures = gestureEngineRef.current.process(results, inferenceStart);
+          // Ref-only handoff to Three.js. No React render is triggered at tracking FPS.
+          onGestureFrame?.(gestures);
           const signature = gestures.hands.map(hand => `${hand.id}:${hand.gesture}:${hand.raw}`).join('|') + `:${gestures.twoHand.active}`;
           if (signature !== lastGestureSignature || inferenceStart - lastGestureDisplayAt >= 110) {
             setGestureState(gestures);
@@ -186,6 +191,7 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
           gestureEngineRef.current.reset();
           setGestureState(EMPTY_GESTURES);
           setErrorMessage(`Tracking stopped: ${error.message || error}`);
+          onControlsEnabledChange?.(false);
           setStatus('error');
         }
       };
@@ -197,6 +203,7 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
         gestureEngineRef.current.reset();
         setGestureState(EMPTY_GESTURES);
         setErrorMessage(describeCameraError(error));
+        onControlsEnabledChange?.(false);
         setStatus('error');
       }
     } finally {
@@ -208,10 +215,14 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
 
   const active = status === 'running';
   const loading = status === 'starting' || status === 'loading-model';
-  return <aside id="hand-tracking" className="hand-panel" aria-label="Webcam gesture recognition lab">
+  return <aside id="hand-tracking" className={`hand-panel ${compact ? 'hand-panel-compact' : ''}`} aria-label="Webcam gesture recognition lab">
     <header className="hand-panel-header">
-      <div><span className="hand-overline">COMPUTER VISION / DAY 06</span><h2>Gesture recognition lab</h2></div>
-      <button className="hand-icon-button" type="button" onClick={onClose} title="Close and turn off camera" aria-label="Close hand lab and turn off camera"><Icon name="close" size={17}/></button>
+      <div><span className="hand-overline">COMPUTER VISION / DAY 07</span><h2>Live 3D hand controls</h2></div>
+      <div className="hand-panel-header-actions">
+        <button className="hand-icon-button" type="button" onClick={() => setCompact(c => !c)}
+          aria-label={compact ? 'Expand hand controls panel' : 'Compact hand controls panel'} title={compact ? 'Expand camera panel' : 'Compact camera panel'}>{compact ? '▢' : '−'}</button>
+        <button className="hand-icon-button" type="button" onClick={onClose} title="Close and turn off camera" aria-label="Close hand lab and turn off camera"><Icon name="close" size={17}/></button>
+      </div>
     </header>
     <div className="hand-video-frame">
       <video ref={videoRef} className="hand-video" playsInline autoPlay muted aria-label="Live camera feed (mirrored)"/>
@@ -231,7 +242,7 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
     </div>
     {active && <div className="hand-label-row">{stats.handedness.length ? stats.handedness.map((hand, index) => <span key={`${hand}:${index}`} className="hand-label">{hand} · 21 points</span>) : <span className="hand-hint">Show your hands in the frame</span>}</div>}
     <section className="hand-recognition" aria-label="Live gesture recognition">
-      <div className="hand-section-heading"><strong>GESTURE SIGNALS</strong><span>{active ? 'Live · recognition only' : 'Start camera to test'}</span></div>
+      <div className="hand-section-heading"><strong>GESTURE SIGNALS</strong><span>{active ? (controlsEnabled ? 'Driving 3D viewer' : 'Preview only') : 'Start camera to test'}</span></div>
       {gestureState.hands.length ? <div className="hand-gesture-cards">
         {gestureState.hands.map(hand => <div key={hand.id} className={`hand-gesture-card ${hand.gesture !== GESTURES.NONE ? 'detected' : ''}`}>
           <div><span>{hand.handedness} hand · #{hand.id}</span><strong>{GESTURE_LABELS[hand.gesture]}</strong></div>
@@ -240,7 +251,7 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
       </div> : <p className="hand-recognition-empty">{active ? 'Show one or two hands. Hold a gesture briefly to stabilize detection.' : 'Detected gestures will appear here.'}</p>}
       <div className={`hand-zoom-preview ${gestureState.twoHand.active ? 'active' : ''}`}>
         <span>TWO-HAND PINCH / ZOOM</span><strong>{gestureState.twoHand.active ? `${gestureState.twoHand.zoomFactor.toFixed(2)}×` : 'INACTIVE'}</strong>
-        <small>{gestureState.twoHand.active ? 'Move pinched hands apart or together to change the preview factor' : 'Pinch with both hands to activate'}</small>
+        <small>{gestureState.twoHand.active ? 'Pinch both hands and spread or close to zoom the viewer' : 'Pinch with both hands to activate'}</small>
       </div>
     </section>
     {errorMessage && <div className="hand-error" role="alert">{errorMessage}</div>}
@@ -252,11 +263,17 @@ export default function HandTrackingPanel({ onClose, onDiagnostics }) {
       <label>Gesture sensitivity<select value={sensitivity} onChange={event => changeSensitivity(event.target.value)}><option value="relaxed">Relaxed</option><option value="balanced">Balanced</option><option value="precise">Precise</option></select></label>
       <button type="button" onClick={resetGestureHistory} title="Clear gesture history and reset stabilization without restarting the camera">Reset gestures</button>
     </div>
-    <details className="hand-gesture-guide"><summary>Gesture reference</summary><ul>{GESTURE_GUIDE.map(item => <li key={item.key}><strong>{GESTURE_LABELS[item.key]}</strong><span>{item.hint}</span></li>)}</ul><p>Two-hand zoom: pinch both hands and change their distance. All signals are previews; they do not move the 3D scene today.</p></details>
+    <details className="hand-gesture-guide"><summary>Gesture reference</summary><ul>{GESTURE_GUIDE.map(item => <li key={item.key}><strong>{GESTURE_LABELS[item.key]}</strong><span>{item.hint}</span></li>)}</ul><p>With 3D control enabled: point to aim, pinch briefly and release to select a GLB part; move a fist to orbit; move an open palm to pan; pinch both hands to zoom. Hand control does not yet load or detach assemblies.</p></details>
+    <div className="hand-drive-controls">
+      <label className="hand-drive-toggle"><input type="checkbox" checked={Boolean(controlsEnabled)}
+        disabled={!active} onChange={event => onControlsEnabledChange?.(event.target.checked)}/>
+        <span>Control the 3D viewer</span></label>
+      <p>{active && controlsEnabled ? 'LIVE: move your hands to control the model. Click to pause anytime.' : 'Camera detection is preview-only until you enable this switch.'}</p>
+    </div>
     <div className="hand-button-row">
       {active || loading ? <button type="button" className="hand-stop-button" onClick={stopCamera}><Icon name="pause" size={16}/> Stop camera</button>
         : <button type="button" className="hand-start-button" disabled={busy} onClick={startCamera}><Icon name="camera" size={16}/> Start camera</button>}
     </div>
-    <p className="hand-privacy">Processing runs on this device. First use downloads the MediaPipe model and WebAssembly runtime. Video is not uploaded by HOLOLAB. This lab recognizes gestures locally; moving 3D models with gestures is scheduled for Day 7 and Week 2.</p>
+    <p className="hand-privacy">Processing runs on this device. First use downloads the MediaPipe model and WebAssembly runtime. Video is not uploaded by HOLOLAB. Only the local browser receives frames; gesture snapshots are passed directly to the 3D viewer when enabled. Exploration and disassembly are Week 2–3 features.</p>
   </aside>;
 }

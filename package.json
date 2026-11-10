@@ -1,7 +1,7 @@
 {
   "name": "hololab",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "check:visuals": "node scripts/check-day3.mjs",
     "check:assets": "node scripts/check-day4.mjs",
     "check:hands": "node scripts/check-day5.mjs",
-    "check:gestures": "node --test scripts/check-day6.test.mjs"
+    "check:gestures": "node --test scripts/check-day6.test.mjs",
+    "check:integration": "node --test scripts/check-day7.test.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.2",

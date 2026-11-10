@@ -288,3 +288,52 @@ svg { flex-shrink: 0; }
 .hand-gesture-guide li strong { color: #e3fcff; }
 .hand-gesture-guide li span { text-align: right; color: #8db9c5; }
 .hand-gesture-guide p { font-size: 10px; color: #88a5b3; line-height: 1.5; margin: 9px 0 0; }
+
+/* Week 1 Day 7 — in-viewer, WebGL-aligned hand cursor and tracking diagnostics. */
+.hand-viewport-cursor { position: absolute; z-index: 4; pointer-events: none; transform: translate(-50%,-50%); display: none;
+  width: 25px; height: 25px; border: 1.5px solid #8df7ff; border-radius: 50%; background: #0ea8c31c;
+  box-shadow: 0 0 0 5px #0fe9ff11, 0 0 18px #4ce8ff88; }
+.hand-viewport-cursor::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px;
+  border-radius: 50%; background: #d4ffff; transform: translate(-50%,-50%); }
+.hand-viewport-cursor[data-mode='pinch'] { border-color: #ffe5a0; box-shadow: 0 0 0 5px #ffd7801b, 0 0 20px #f9bb53ab; }
+.hand-viewport-cursor[data-mode='orbit'], .hand-viewport-cursor[data-mode='pan'] { border-color: #8cb6ff; }
+.hand-cursor-label { position: absolute; left: 28px; top: -5px; pointer-events: none;
+  background: #062334ee; border: 1px solid #397d93; border-radius: 5px; padding: 5px 7px;
+  color: #b7f5fb; white-space: nowrap; font-size: 10px; }
+.hand-viewport-status { position: absolute; z-index: 4; pointer-events: none; top: 25px; left: 50%; transform: translateX(-50%);
+  background: #061b2ce8; border: 1px solid #286378; border-radius: 6px; color: #8fdbe9;
+  padding: 7px 11px; font-size: 10px; font-weight: 650; letter-spacing: .04em; display: none; }
+.hand-drive-controls { background: #0c2d3e; border: 1px solid #3a879b; border-radius: 8px; padding: 9px; margin: 9px 0; }
+.hand-drive-toggle { display: flex; align-items: center; gap: 9px; color: #c3f6ff; font-size: 12px; font-weight: 650; cursor: pointer; }
+.hand-drive-toggle input { width: 16px; height: 16px; accent-color: #45d4e6; }
+.hand-drive-controls p { font-size: 10px; line-height: 1.45; color: #9cbeca; margin: 7px 0 0; }
+.perf-lab { border-top: 1px solid #183b4d; border-bottom: 1px solid #183b4d; background: #081a29; }
+.perf-heading { width: 100%; padding: 13px 25px; background: transparent; border: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  color: #6cbbca; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+.perf-heading strong { display: inline-block; color: #bce5ee; font-weight: 500; margin-left: 10px; letter-spacing: 0; }
+.perf-body { padding: 5px 25px 20px; }
+.perf-body > p { font-size: 11px; color: #98b6c5; line-height: 1.55; }
+.perf-current, .perf-results { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.perf-current > div, .perf-results > div { background: #0d2a3b; padding: 10px; border: 1px solid #26536a; border-radius: 6px; min-width: 0; }
+.perf-current small, .perf-results small { display: block; color: #729eaf; font-size: 9px; }
+.perf-current strong, .perf-results strong { display: block; margin-top: 5px; font-size: 13px; color: #93f1ff; }
+.perf-results { grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 13px; }
+.perf-results span { display: block; font-size: 10px; color: #82a6b7; margin-top: 5px; line-height: 1.45; }
+.perf-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.perf-buttons button, .perf-copy { padding: 8px 12px; border-radius: 6px; background: #10364a; color: #b6e8f1; border: 1px solid #2b6c7f; font-size: 11px; }
+.perf-buttons button:hover:not(:disabled), .perf-copy:hover { background: #175167; }
+.perf-copy { margin-top: 12px; }
+.perf-capturing { color: #a3f4d7 !important; }
+.perf-note { font-size: 10px !important; color: #7d9bad !important; }
+@media (max-width: 790px) { .perf-current { grid-template-columns: repeat(2,minmax(0,1fr)); } .perf-results { grid-template-columns: 1fr; } }
+
+.hand-panel-header-actions { display: flex; align-items: center; gap: 5px; }
+.hand-panel-compact { width: min(236px, calc(100% - 20px)); padding: 10px; }
+.hand-panel-compact .hand-video-frame { aspect-ratio: 16 / 9; }
+.hand-panel-compact .hand-metrics { gap: 4px; }
+.hand-panel-compact .hand-metrics > div { padding: 5px; }
+.hand-panel-compact .hand-recognition, .hand-panel-compact .hand-control-row,
+.hand-panel-compact .hand-gesture-settings, .hand-panel-compact .hand-gesture-guide,
+.hand-panel-compact .hand-privacy, .hand-panel-compact .hand-label-row { display: none; }
+.hand-panel-compact .hand-drive-controls { padding: 7px; }
+.hand-panel-compact .hand-drive-controls p { display: none; }
